@@ -17,6 +17,12 @@ export const metadata: Metadata = {
   description: "Generate URL-friendly slugs from any text. Easy to use slugify tool with dark mode support.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
