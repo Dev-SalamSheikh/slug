@@ -12,7 +12,8 @@ interface OutputItem {
   id: number;
   original: string;
   slug: string;
-  copied: boolean;
+  copiedOriginal: boolean;
+  copiedSlug: boolean;
 }
 
 export default function Home() {
@@ -54,7 +55,8 @@ export default function Home() {
         id: Date.now() + input.id,
         original: input.value,
         slug: generateSlug(input.value),
-        copied: false,
+        copiedOriginal: false,
+        copiedSlug: false,
       }));
     setOutputs(newOutputs);
   };
@@ -78,13 +80,24 @@ export default function Home() {
     setInputs(inputs.map((input) => (input.id === id ? { ...input, value } : input)));
   };
 
-  const handleCopy = async (id: number) => {
+  const handleCopyOriginal = async (id: number) => {
+    const output = outputs.find((o) => o.id === id);
+    if (output?.original) {
+      await navigator.clipboard.writeText(output.original);
+      setOutputs(outputs.map((o) => (o.id === id ? { ...o, copiedOriginal: true } : o)));
+      setTimeout(() => {
+        setOutputs(outputs.map((o) => (o.id === id ? { ...o, copiedOriginal: false } : o)));
+      }, 2000);
+    }
+  };
+
+  const handleCopySlug = async (id: number) => {
     const output = outputs.find((o) => o.id === id);
     if (output?.slug) {
       await navigator.clipboard.writeText(output.slug);
-      setOutputs(outputs.map((o) => (o.id === id ? { ...o, copied: true } : o)));
+      setOutputs(outputs.map((o) => (o.id === id ? { ...o, copiedSlug: true } : o)));
       setTimeout(() => {
-        setOutputs(outputs.map((o) => (o.id === id ? { ...o, copied: false } : o)));
+        setOutputs(outputs.map((o) => (o.id === id ? { ...o, copiedSlug: false } : o)));
       }, 2000);
     }
   };
@@ -182,41 +195,54 @@ export default function Home() {
                 {outputs.map((output) => (
                   <div
                     key={output.id}
-                    onClick={() => handleCopy(output.id)}
-                    className="relative group cursor-pointer"
+                    className="relative group"
                   >
-                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="relative p-4 sm:p-5 bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl border-2 border-slate-200 dark:border-slate-700 group-hover:border-transparent transition-all duration-300">
+                    <div className="p-4 sm:p-5 bg-slate-100 dark:bg-slate-800 rounded-xl sm:rounded-2xl border-2 border-slate-200 dark:border-slate-700 transition-all duration-300">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                        <div className="flex-1 min-w-0">
+                        <div 
+                          onClick={() => handleCopyOriginal(output.id)}
+                          className="flex-1 min-w-0 relative group/original cursor-pointer"
+                        >
                           <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                             Original
                           </p>
-                          <p className="text-sm text-slate-600 dark:text-slate-300 truncate">
+                          <p className="text-sm text-slate-600 dark:text-slate-300 truncate pr-8">
                             {output.original}
                           </p>
+                          <div className="absolute inset-0 bg-white/95 dark:bg-slate-700/95 rounded-lg opacity-0 group-hover/original:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-sm">
+                            {output.copiedOriginal ? (
+                              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                                <Check className="w-4 h-4" /> Copied!
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-cyan-600 dark:text-cyan-400">
+                                <Copy className="w-4 h-4" /> Click to copy
+                              </span>
+                            )}
+                          </div>
                         </div>
                         <div className="hidden sm:block w-px h-10 bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
+                        <div 
+                          onClick={() => handleCopySlug(output.id)}
+                          className="flex-1 min-w-0 relative group/slug cursor-pointer"
+                        >
                           <p className="text-xs font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                             Slug
                           </p>
-                          <p className="text-sm font-mono text-cyan-600 dark:text-cyan-400 truncate">
+                          <p className="text-sm font-mono text-cyan-600 dark:text-cyan-400 truncate pr-8">
                             {output.slug}
                           </p>
-                        </div>
-                        <div className="sm:ml-2">
-                          {output.copied ? (
-                            <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-emerald-500 text-white rounded-lg sm:rounded-xl shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
-                              <Check className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
-                              <span className="text-xs sm:text-sm font-medium">Copied!</span>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg sm:rounded-xl opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
-                              <Copy className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
-                              <span className="text-xs sm:text-sm font-medium whitespace-nowrap">Copy</span>
-                            </div>
-                          )}
+                          <div className="absolute inset-0 bg-white/95 dark:bg-slate-700/95 rounded-lg opacity-0 group-hover/slug:opacity-100 transition-opacity duration-200 flex items-center justify-center backdrop-blur-sm">
+                            {output.copiedSlug ? (
+                              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                                <Check className="w-4 h-4" /> Copied!
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1.5 text-xs sm:text-sm font-medium text-cyan-600 dark:text-cyan-400">
+                                <Copy className="w-4 h-4" /> Click to copy
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
